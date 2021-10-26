@@ -2,6 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import time
+
+#fastai import
+from fastai.data.core import DataLoaders
+from fastai.optimizer import OptimWrapper
+from fastai.callback.schedule import Learner
+from fastai.metrics import accuracy
+from functools import partial
+
 import math
 import numpy as np
 import torch
@@ -36,20 +44,20 @@ def weights_init_normal(m):
     if classname.find('Conv2d') != -1:
         m.apply(weights_init_normal_)
     elif classname.find('Linear') != -1:
-        init.uniform(m.weight.data, 0.0, 0.02)
+        init.uniform_(m.weight.data, 0.0, 0.02)
     elif classname.find('BatchNorm2d') != -1:
-        init.uniform(m.weight.data, 1.0, 0.02)
-        init.constant(m.bias.data, 0.0)
+        init.uniform_(m.weight.data, 1.0, 0.02)
+        init.constant_(m.bias.data, 0.0)
 
 def weights_init_normal_(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        init.uniform(m.weight.data, 0.0, 0.02)
+        init.uniform_(m.weight.data, 0.0, 0.02)
     elif classname.find('Linear') != -1:
-        init.uniform(m.weight.data, 0.0, 0.02)
+        init.uniform_(m.weight.data, 0.0, 0.02)
     elif classname.find('BatchNorm2d') != -1:
-        init.uniform(m.weight.data, 1.0, 0.02)
-        init.constant(m.bias.data, 0.0)
+        init.uniform_(m.weight.data, 1.0, 0.02)
+        init.constant_(m.bias.data, 0.0)
 
 def weights_init_xavier(m):
     classname = m.__class__.__name__
@@ -59,7 +67,7 @@ def weights_init_xavier(m):
         init.xavier_normal(m.weight.data, gain=1)
     elif classname.find('BatchNorm2d') != -1:
         init.uniform_(m.weight.data, 1.0, 0.02)
-        init.constant(m.bias.data, 0.0)
+        init.constant_(m.bias.data, 0.0)
 
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
@@ -118,24 +126,31 @@ class CNN_train():
                 self.n_class = 10
                 self.channel = 3
                 if self.validation:
-                    self.dataloader, self.test_dataloader = get_train_valid_loader(data_dir='./', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=1, pin_memory=True)
+                    self.dataloader, self.test_dataloader = get_train_valid_loader(data_dir='data', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=1, pin_memory=True)
+
+                    #Fastai dataloader
+                    #self.data = DataLoaders(self.dataloader, self.test_dataloader)
+
                     # self.dataloader, self.test_dataloader = loaders[0], loaders[1]
                 else:
-                    train_dataset = dset.CIFAR10(root='./', train=True, download=True,
+                    train_dataset = dset.CIFAR10(root='data', train=True, download=True,
                             transform=transforms.Compose([
                                 transforms.RandomHorizontalFlip(),
-                                transforms.Scale(self.imgSize),
+                                transforms.Resize(self.imgSize),
                                 transforms.ToTensor(),
                                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                             ]))
-                    test_dataset = dset.CIFAR10(root='./', train=False, download=True,
+                    test_dataset = dset.CIFAR10(root='data', train=False, download=True,
                             transform=transforms.Compose([
-                                transforms.Scale(self.imgSize),
+                                transforms.Resize(self.imgSize),
                                 transforms.ToTensor(),
                                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                             ]))
                     self.dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(2))
                     self.test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(2))
+
+                    # Fastai dataloader
+                    #self.data = DataLoaders(self.dataloader,self.test_dataloader)
             print('train num    ', len(self.dataloader.dataset))
             # print('test num     ', len(self.test_dataloader.dataset))
         else:
@@ -154,16 +169,26 @@ class CNN_train():
         init_weights(model, 'kaiming')
         model.cuda(gpuID)
         # Loss and Optimizer
+
         criterion = nn.CrossEntropyLoss()
         criterion.cuda(gpuID)
         optimizer = optim.Adam(model.parameters(), lr=0.01, betas=(0.5, 0.999))
+
         # optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, dampening=0, weight_decay=0.0005)
         input = torch.FloatTensor(self.batchsize, self.channel, self.imgSize, self.imgSize)
         input = input.cuda(gpuID)
         label = torch.LongTensor(self.batchsize)
         label = label.cuda(gpuID)
 
+        # FastAi try
+        # opt_func = partial(OptimWrapper, opt=optim.Adam)
+        #learn = Learner(self.data, model, loss_func=nn.CrossEntropyLoss, opt_func=opt_func, metrics=accuracy)
+
+        #learn.fit_one_cycle(epoch_num, lr_max=1e-2)
+
+
         # Train loop
+
         for epoch in range(1, epoch_num+1):
             start_time = time.time()
             if self.verbose:
@@ -235,9 +260,11 @@ class CNN_train():
                     tmp *= 0.1
                     for param_group in optimizer.param_groups:
                         param_group['lr'] = tmp
+
         # save the model
         torch.save(model.state_dict(), './model_%d.pth' % int(gpuID))
         return t_loss
+        #return learn.accuracy # Fastai return
 
     # For validation/test
     def __test_per_std(self, model, criterion, gpuID, input, label):

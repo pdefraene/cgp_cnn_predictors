@@ -29,7 +29,7 @@ if __name__ == '__main__':
             pickle.dump(network_info, f)
         # Evaluation function for CGP (training CNN and return validation accuracy)
         imgSize = 32
-        eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=1, batchsize=128,
+        eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=2, batchsize=128,
                                imgSize=imgSize)
         #eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128, imgSize=imgSize)
 
@@ -52,7 +52,8 @@ if __name__ == '__main__':
         print(cgp._log_data(net_info_type='active_only', start_time=0))
         # Retraining the network
         temp = CNN_train('cifar10', validation=False, verbose=True, batchsize=128)
-        acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=500, out_model='retrained_net.model')
+        #acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=500, out_model='retrained_net.model')
+        acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=100, out_model='retrained_net.model')
         print(acc)
 
         # # otherwise (in the case where we do not have a log file.)
