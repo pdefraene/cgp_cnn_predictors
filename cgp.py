@@ -249,6 +249,9 @@ class CGP(object):
         return log_list
 
     def _log_data_children(self, net_info_type='active_only', start_time=0, pop=None):
+        """
+        log of a child with gene, num_eval, time to eval, accuracy and network info
+        """
         log_list = [self.num_gen, self.num_eval, time.time()-start_time, pop.eval, pop.count_active_node()]
         if net_info_type == 'active_only':
             log_list.append(pop.active_net_list())
