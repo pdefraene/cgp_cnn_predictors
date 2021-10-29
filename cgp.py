@@ -209,6 +209,21 @@ class Individual(object):
         return net_list
 
 
+    def encodage_for_e2epp(self):
+        """
+        give the encodage of the individuals
+        Returns
+        -------
+        encodage
+        """
+        encoding = []
+        for layer in self.active_net_list():
+            print(layer)
+
+        # if layer is blabla
+
+        return encoding
+
 # CGP with (1 + \lambda)-ES
 class CGP(object):
     def __init__(self, net_info, eval_func, lam=4, imgSize=32, init=False):
@@ -250,7 +265,17 @@ class CGP(object):
 
     def _log_data_children(self, net_info_type='active_only', start_time=0, pop=None):
         """
-        log of a child with gene, num_eval, time to eval, accuracy and network info
+        return the log of a child with gene, num_eval, time to eval, accuracy and network info
+        Parameters
+        ----------
+        net_info_type : ? idk yet
+        start_time : start time of the evaluation
+        pop : ? idk yet
+
+        Returns
+        -------
+        list of one line of log
+
         """
         log_list = [self.num_gen, self.num_eval, time.time()-start_time, pop.eval, pop.count_active_node()]
         if net_info_type == 'active_only':
@@ -262,6 +287,16 @@ class CGP(object):
         return log_list
 
     def load_log(self, log_data):
+        """
+        load a line of log into the class
+        Parameters
+        ----------
+        log_data : line of log
+
+        Returns
+        -------
+
+        """
         self.num_gen = log_data[0]
         self.num_eval = log_data[1]
         net_info = self.pop[0].net_info
@@ -269,13 +304,24 @@ class CGP(object):
         self.pop[0].gene = np.array(log_data[5:]).reshape((net_info.node_num + net_info.out_num, net_info.max_in_num + 1))
         self.pop[0].check_active()
 
-    # Evolution CGP:
-    #   At each iteration:
-    #     - Generate lambda individuals in which at least one active node changes (i.e., forced mutation)
-    #     - Mutate the best individual with neutral mutation (unchanging the active nodes)
-    #         if the best individual is not updated.
     def modified_evolution(self, max_eval=100, mutation_rate=0.01, log_file='./log.txt', arch_file='./arch.txt'):
-        print("in modified")
+        """
+        Evolution CGP : at each iteration:
+            - Generate lambda individuals in which at least one active node changes (i.e., forced mutation)
+            - Mutate the best individual with neutral mutation (unchanging the active nodes)
+              if the best individual is not updated.
+
+        Parameters
+        ----------
+        max_eval : number maximal of evolution for the CGP
+        mutation_rate : mutation rate for the CGP
+        log_file : log file reset a each run of the program
+        arch_file : archive file to write
+
+        Returns
+        -------
+
+        """
         with open('child.txt', 'w') as fw_c :
             writer_c = csv.writer(fw_c, lineterminator='\n')
             start_time = time.time()
@@ -328,7 +374,7 @@ class CGP(object):
                 fw = open(log_file, 'a')
                 writer = csv.writer(fw, lineterminator='\n')
                 writer.writerow(self._log_data(net_info_type='full', start_time=start_time))
-                fa = open('arch.txt', 'a')
+                fa = open(arch_file, 'a')
                 writer_a = csv.writer(fa, lineterminator='\n')
                 writer_a.writerow(self._log_data(net_info_type='active_only', start_time=start_time))
                 fw.close()

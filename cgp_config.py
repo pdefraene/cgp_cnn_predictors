@@ -27,7 +27,22 @@ class NoDaemonProcessPool(multiprocessing.pool.Pool):
 
 # Evaluation of CNNs
 def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize):
+    """
+    Evaluate a Neural network
+    Parameters
+    ----------
+    net: network
+    gpu_id: ID of the gpu (multiprocessing)
+    epoch_num: number of epoch for training the network
+    batchsize: batch size for the training
+    dataset: dataset for train
+    verbose: boolean value for print info
+    imgSize:?
 
+    Returns
+    -------
+    Accuracy of the network
+    """
     print('\tgpu_id:', gpu_id, ',', net)
     train = cnn.CNN_train(dataset, validation=True, verbose=verbose, imgSize=imgSize, batchsize=batchsize)
     evaluation = train(net, gpu_id, epoch_num=epoch_num, out_model=None)
@@ -45,6 +60,7 @@ class CNNEvaluation(object):
         self.imgSize = imgSize
 
     def __call__(self, net_lists):
+        print("Net list of a CNNEvaluation:  ",net_lists) # check net_list
         evaluations = np.zeros(len(net_lists))
         for i in np.arange(0, len(net_lists)):
             evaluations[i] = cnn_eval(net_lists[i], 0, self.epoch_num, self.batchsize, self.dataset, self.verbose, self.imgSize)

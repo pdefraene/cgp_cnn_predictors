@@ -35,8 +35,20 @@ class E2epp():
         pass
 
     def save_model(self):
+        """
+        save model
+        Returns
+        -------
+
+        """
         model = [self.trees,self.features]
         joblib.dump(model, 'E2eep_model.pkl')
 
     def load_saved_model(self):
+        """
+        load model
+        Returns
+        -------
+
+        """
         self.model, self.features = joblib.load('E2eep_model.pkl')

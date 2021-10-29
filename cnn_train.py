@@ -109,11 +109,18 @@ def init_weights(net, init_type='normal'):
 # __call__: training the CNN defined by CGP list
 class CNN_train():
     def __init__(self, dataset_name, validation=True, verbose=True, imgSize=32, batchsize=128):
-        # dataset_name: name of data set ('bsds'(color) or 'bsds_gray')
-        # validation: [True]  model train/validation mode
-        #             [False] model test mode for final evaluation of the evolved model
-        #                     (raining data : all training data, test data : all test data)
-        # verbose: flag of display
+        """
+        class for training a CNN
+        Parameters
+        ----------
+        dataset_name : name of data set ('bsds'(color) or 'bsds_gray')
+        validation : True]  model train/validation mode
+                     [False] model test mode for final evaluation of the evolved model
+                     (raining data : all training data, test data : all test data)
+        verbose : boolean for print info
+        imgSize: ?
+        batchsize : size of the batch
+        """
         self.verbose = verbose
         self.imgSize = imgSize
         self.validation = validation
@@ -158,6 +165,20 @@ class CNN_train():
             exit(1)
 
     def __call__(self, cgp, gpuID, epoch_num=200, out_model='mymodel.model'):
+        """
+        train the CNN defined by cgp
+
+        Parameters
+        ----------
+        cgp
+        gpuID ID for multiprocess gpu
+        epoch_num number of epoch to train
+        out_model ?
+
+        Returns t_loss average accuracy
+        -------
+
+        """
         if self.verbose:
             print('GPUID     :', gpuID)
             print('epoch_num :', epoch_num)
