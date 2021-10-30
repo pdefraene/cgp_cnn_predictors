@@ -217,10 +217,34 @@ class Individual(object):
         encodage
         """
         encoding = []
-        for layer in self.active_net_list():
-            print(layer)
-
-        # if layer is blabla
+        #for each layer encode it in number version
+        for name, in1, in2 in self.active_net_list():
+            if name == 'input' in name:
+                pass
+            elif name == 'full':
+                pass
+            elif name == 'Max_Pool' or name == 'Avg_Pool':
+                pass
+                if func == 'Max':
+                    pass
+                else:
+                    pass
+            elif name == 'Concat':
+                pass
+            elif name == 'Sum':
+                pass
+            else:
+                key = name.split('_')
+                down = key[0]
+                func = key[1]
+                out_size = int(key[2])
+                kernel = int(key[3])
+                if down == 'S':
+                    if func == 'ConvBlock':
+                        pass
+                    else:
+                        #resBlock
+                        pass
 
         return encoding
 
@@ -234,6 +258,8 @@ class CGP(object):
         self.num_eval = 0
         self.max_pool_num = int(math.log2(imgSize) - 2)
         self.init = init
+
+        self.pop[0].encodage_for_e2epp()
 
     def _evaluation(self, pop, eval_flag):
         # create network list

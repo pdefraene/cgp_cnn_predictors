@@ -182,6 +182,15 @@ class DeConvBlock_sum(nn.Module):
 
 class CGP2CNN(nn.Module):
     def __init__(self, cgp, in_channel, n_class, imgSize):
+        """
+        complex CNN  with list of every other CNN
+        Parameters
+        ----------
+        cgp : list of network
+        in_channel : channel enter
+        n_class : class output
+        imgSize : ?
+        """
         super(CGP2CNN, self).__init__()
         self.cgp = cgp
         self.pool_size = 2

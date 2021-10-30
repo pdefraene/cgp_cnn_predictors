@@ -170,9 +170,9 @@ class CNN_train():
 
         Parameters
         ----------
-        cgp
-        gpuID ID for multiprocess gpu
-        epoch_num number of epoch to train
+        cgp : list of network info
+        gpuID: ID for multiprocess gpu
+        epoch_num: number of epoch to train
         out_model ?
 
         Returns t_loss average accuracy
