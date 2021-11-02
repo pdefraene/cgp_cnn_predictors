@@ -8,35 +8,47 @@ import pandas as pd
 from cgp import *
 from cgp_config import *
 from cnn_train import CNN_train
-
+from e2epp import E2epp
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Evolving CAE structures')
-    parser.add_argument('--gpu_num', '-g', type=int, default=1, help='Num. of GPUs')
+    #parser.add_argument('--gpu_num', '-g', type=int, default=1, help='Num. of GPUs')
     parser.add_argument('--lam', '-l', type=int, default=2, help='Num. of offsprings')
     parser.add_argument('--net_info_file', default='network_info.pickle', help='Network information file name')
     parser.add_argument('--log_file', default='./log_cgp.txt', help='Log file name')
     parser.add_argument('--mode', '-m', default='evolution', help='Mode (evolution / retrain / reevolution)')
     parser.add_argument('--init', '-i', action='store_true')
+    parser.add_argument('--predictor', '-p', default='training')
     args = parser.parse_args()
 
     # --- Optimization of the CNN architecture ---
     if args.mode == 'evolution':
-        # Create CGP configuration and save network information
-        network_info = CgpInfoConvSet(rows=5, cols=30, level_back=10, min_active_num=1, max_active_num=30)
-        with open(args.net_info_file, mode='wb') as f:
-            pickle.dump(network_info, f)
-        # Evaluation function for CGP (training CNN and return validation accuracy)
-        imgSize = 32
-        eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=2, batchsize=128,
-                               imgSize=imgSize)
-        #eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128, imgSize=imgSize)
+        if args.predictor == 'training':
+            # Create CGP configuration and save network information
+            network_info = CgpInfoConvSet(rows=5, cols=30, level_back=10, min_active_num=1, max_active_num=30)
+            with open(args.net_info_file, mode='wb') as f:
+                pickle.dump(network_info, f)
+            # Evaluation function for CGP (training CNN and return validation accuracy)
+            imgSize = 32
+            # eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=1, batchsize=128,imgSize=imgSize)
 
-        # Execute evolution
-        cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=imgSize, init=args.init)
-        #cgp.modified_evolution(max_eval=250, mutation_rate=0.1, log_file=args.log_file)
-        cgp.modified_evolution(max_eval=25, mutation_rate=0.1, log_file=args.log_file)
+            eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128,
+                                   imgSize=imgSize,predictor=None)
+
+            # Execute evolution
+            cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=imgSize, init=args.init)
+            # cgp.modified_evolution(max_eval=250, mutation_rate=0.1, log_file=args.log_file)
+            cgp.modified_evolution(max_eval=25, mutation_rate=0.1, log_file=args.log_file)
+        elif args.predictor == 'e2epp':
+            network_info = CgpInfoConvSet(rows=5, cols=30, level_back=10, min_active_num=1, max_active_num=30)
+            predictor = E2epp(nb_trees=1000,training_data='e2epp.txt')
+            imgSize = 32
+            eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128,
+                                   imgSize=imgSize,predictor=predictor)
+            cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=32, init=args.init)
+
+
 
     # --- Retraining evolved architecture ---
     elif args.mode == 'retrain':

@@ -8,6 +8,9 @@ import cnn_train as cnn
 
 
 # wrapper function for multiprocessing
+from e2epp import E2epp
+
+
 def arg_wrapper_mp(args):
     return args[0](*args[1:])
 
@@ -26,7 +29,7 @@ class NoDaemonProcessPool(multiprocessing.pool.Pool):
 
 
 # Evaluation of CNNs
-def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize):
+def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predictor):
     """
     Evaluate a Neural network
     Parameters
@@ -38,32 +41,38 @@ def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize):
     dataset: dataset for train
     verbose: boolean value for print info
     imgSize:?
+    predictor: predictor for eval
 
     Returns
     -------
     Accuracy of the network
     """
-    print('\tgpu_id:', gpu_id, ',', net)
-    train = cnn.CNN_train(dataset, validation=True, verbose=verbose, imgSize=imgSize, batchsize=batchsize)
-    evaluation = train(net, gpu_id, epoch_num=epoch_num, out_model=None)
-    print('\tgpu_id:', gpu_id, ', eval:', evaluation)
+    evaluation = 0
+    if predictor is None:
+        print('\tgpu_id:', gpu_id, ',', net)
+        train = cnn.CNN_train(dataset, validation=True, verbose=verbose, imgSize=imgSize, batchsize=batchsize)
+        evaluation = train(net, gpu_id, epoch_num=epoch_num, out_model=None)
+        print('\tgpu_id:', gpu_id, ', eval:', evaluation)
+    elif isinstance(predictor, E2epp):
+        evaluation = predictor.predict_performance(net)
     return evaluation
 
 
 class CNNEvaluation(object):
-    def __init__(self, gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=16, imgSize=32):
+    def __init__(self, gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=16, imgSize=32, predictor = None):
         self.gpu_num = gpu_num
         self.epoch_num = epoch_num
         self.batchsize = batchsize
         self.dataset = dataset
         self.verbose = verbose
         self.imgSize = imgSize
+        self.predictor = predictor
 
     def __call__(self, net_lists):
         print("Net list of a CNNEvaluation:  ",net_lists) # check net_list
         evaluations = np.zeros(len(net_lists))
         for i in np.arange(0, len(net_lists)):
-            evaluations[i] = cnn_eval(net_lists[i], 0, self.epoch_num, self.batchsize, self.dataset, self.verbose, self.imgSize)
+            evaluations[i] = cnn_eval(net_lists[i], 0, self.epoch_num, self.batchsize, self.dataset, self.verbose, self.imgSize, self.predictor)
 
         return evaluations
 

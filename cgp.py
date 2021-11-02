@@ -7,6 +7,9 @@ import numpy as np
 import math
 
 # gene[f][c] f:function type, c:connection (nodeID)
+from utils import list_to_string
+
+
 class Individual(object):
 
     def __init__(self, net_info, init):
@@ -220,19 +223,17 @@ class Individual(object):
         #for each layer encode it in number version
         for name, in1, in2 in self.active_net_list():
             if name == 'input' in name:
-                pass
+                encoding.append([1, in1, in2, 0, 0])
             elif name == 'full':
-                pass
-            elif name == 'Max_Pool' or name == 'Avg_Pool':
-                pass
-                if func == 'Max':
-                    pass
-                else:
-                    pass
+                encoding.append([2, in1, in2, 0, 0])
+            elif name == 'Max_Pool':
+                encoding.append([3, in1, in2, 0, 0])
+            elif name == 'Avg_Pool':
+                encoding.append([4, in1, in2, 0, 0])
             elif name == 'Concat':
-                pass
+                encoding.append([5, in1, in2, 0, 0])
             elif name == 'Sum':
-                pass
+                encoding.append([6, in1, in2, 0, 0])
             else:
                 key = name.split('_')
                 down = key[0]
@@ -241,11 +242,14 @@ class Individual(object):
                 kernel = int(key[3])
                 if down == 'S':
                     if func == 'ConvBlock':
-                        pass
-                    else:
-                        #resBlock
-                        pass
+                        encoding.append([7, in1, in2, out_size, kernel])
+                    elif func == 'ResBlock':
+                        encoding.append([8, in1, in2, out_size, kernel])
 
+        # add layer 0 empty for have fixed size
+        for _ in range(len(encoding), self.net_info.max_active_num):
+            encoding.append([0, 0, 0, 0, 0])
+        encoding.append(self.eval)
         return encoding
 
 # CGP with (1 + \lambda)-ES
@@ -259,7 +263,7 @@ class CGP(object):
         self.max_pool_num = int(math.log2(imgSize) - 2)
         self.init = init
 
-        self.pop[0].encodage_for_e2epp()
+        print(list_to_string(self.pop[0].encodage_for_e2epp()))
 
     def _evaluation(self, pop, eval_flag):
         # create network list
@@ -385,10 +389,15 @@ class CGP(object):
                 # save
                 f = open('arch_child.txt', 'a')
                 writer_f = csv.writer(f, lineterminator='\n')
+                fe = open('e2eppData.txt', 'a')
+                writer_e = csv.writer(fe, lineterminator='\n')
+
                 for c in range(1 + self.lam):
                     writer_c.writerow(self._log_data_children(net_info_type='full', start_time=start_time, pop=self.pop[c]))
                     writer_f.writerow(self._log_data_children(net_info_type='active_only', start_time=start_time, pop=self.pop[c]))
+                    writer_e.writerow(list_to_string(self.pop[c].encodage_for_e2epp()))
                 f.close()
+                fe.close()
                 # replace the parent by the best individual
                 if evaluations[best_arg] > self.pop[0].eval:
                     self.pop[0].copy(self.pop[best_arg + 1])

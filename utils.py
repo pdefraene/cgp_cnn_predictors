@@ -38,3 +38,47 @@ def plot_images(images, cls_true, cls_pred=None):
         ax.set_yticks([])
 
     plt.show()
+
+
+def list_to_string(list):
+    """
+
+    Parameters
+    ----------
+    list: list of network to transform into string for write it in a file
+
+    Returns
+    -------
+
+    """
+    string = ""
+    for sub_list in range(len(list)):
+        if sub_list == len(list)-1:
+            if list[sub_list] == None:
+                string += 'None'
+            else:
+                string += list[sub_list]
+        else:
+            print("IN")
+            for num in list[sub_list]:
+                string += str(num)
+                string += ','
+    return string
+
+def read_add_0(file):
+    f = open(file, "r")
+    f2 = open("e2epp.txt", "w")
+    for line in f:
+        list = line.split(",")
+        for _ in range(len(list), 151):
+            list.insert(len(list)-2,'0')
+
+        f2.write(",".join(list))
+
+    f.close()
+    f2.close()
+
+if __name__ == '__main__':
+    read_add_0("e2eppData.txt")
+
+
