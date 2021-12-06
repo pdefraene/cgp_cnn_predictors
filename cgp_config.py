@@ -14,20 +14,44 @@ from e2epp import E2epp
 def arg_wrapper_mp(args):
     return args[0](*args[1:])
 
-class NoDaemonProcess(mp.Process):
-    # make 'daemon' attribute always return False
-    def _get_daemon(self):
-        return False
-    def _set_daemon(self, value):
-        pass
-    daemon = property(_get_daemon, _set_daemon)
+def encodage_for_e2epp(net,size=30):
+    """
+    give the encodage of the individuals
+    Returns
+    -------
+    encodage
+    """
+    encoding = []
+    #for each layer encode it in number version
+    for name, in1, in2 in net:
+        if name == 'input' in name:
+            encoding.append([1, in1, in2, 0, 0])
+        elif name == 'full':
+            encoding.append([2, in1, in2, 0, 0])
+        elif name == 'Max_Pool':
+            encoding.append([3, in1, in2, 0, 0])
+        elif name == 'Avg_Pool':
+            encoding.append([4, in1, in2, 0, 0])
+        elif name == 'Concat':
+            encoding.append([5, in1, in2, 0, 0])
+        elif name == 'Sum':
+            encoding.append([6, in1, in2, 0, 0])
+        else:
+            key = name.split('_')
+            down = key[0]
+            func = key[1]
+            out_size = int(key[2])
+            kernel = int(key[3])
+            if down == 'S':
+                if func == 'ConvBlock':
+                    encoding.append([7, in1, in2, out_size, kernel])
+                elif func == 'ResBlock':
+                    encoding.append([8, in1, in2, out_size, kernel])
 
-# We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
-# because the latter is only a wrapper function, not a proper class.
-class NoDaemonProcessPool(multiprocessing.pool.Pool):
-    Process = NoDaemonProcess
-
-
+    # add layer 0 empty for have fixed size
+    for _ in range(len(encoding), size):
+        encoding.append([0, 0, 0, 0, 0])
+    return encoding
 # Evaluation of CNNs
 def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predictor):
     """
@@ -54,7 +78,9 @@ def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predi
         evaluation = train(net, gpu_id, epoch_num=epoch_num, out_model=None)
         print('\tgpu_id:', gpu_id, ', eval:', evaluation)
     elif isinstance(predictor, E2epp):
-        evaluation = predictor.predict_performance(net)
+        encoding = encodage_for_e2epp(net)
+        evaluation = predictor.predict_performance(encoding)
+        print(evaluation)
     return evaluation
 
 

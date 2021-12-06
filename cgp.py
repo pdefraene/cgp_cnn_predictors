@@ -249,6 +249,7 @@ class Individual(object):
         # add layer 0 empty for have fixed size
         for _ in range(len(encoding), self.net_info.max_active_num):
             encoding.append([0, 0, 0, 0, 0])
+
         encoding.append(self.eval)
         return encoding
 
@@ -262,8 +263,6 @@ class CGP(object):
         self.num_eval = 0
         self.max_pool_num = int(math.log2(imgSize) - 2)
         self.init = init
-
-        print(list_to_string(self.pop[0].encodage_for_e2epp()))
 
     def _evaluation(self, pop, eval_flag):
         # create network list
@@ -334,7 +333,7 @@ class CGP(object):
         self.pop[0].gene = np.array(log_data[5:]).reshape((net_info.node_num + net_info.out_num, net_info.max_in_num + 1))
         self.pop[0].check_active()
 
-    def modified_evolution(self, max_eval=100, mutation_rate=0.01, log_file='./log.txt', arch_file='./arch.txt'):
+    def modified_evolution(self, max_eval=100, mutation_rate=0.01, log_file='./log.txt', arch_file='./arch.txt',write=False ):
         """
         Evolution CGP : at each iteration:
             - Generate lambda individuals in which at least one active node changes (i.e., forced mutation)
@@ -353,7 +352,7 @@ class CGP(object):
 
         """
         with open('child.txt', 'w') as fw_c :
-            writer_c = csv.writer(fw_c, lineterminator='\n')
+            if write: writer_c = csv.writer(fw_c, lineterminator='\n')
             start_time = time.time()
             eval_flag = np.empty(self.lam)
             active_num = self.pop[0].count_active_node()
@@ -387,17 +386,18 @@ class CGP(object):
                 evaluations = self._evaluation(self.pop[1:], eval_flag=eval_flag)
                 best_arg = evaluations.argmax()
                 # save
-                f = open('arch_child.txt', 'a')
-                writer_f = csv.writer(f, lineterminator='\n')
-                fe = open('e2eppData.txt', 'a')
-                writer_e = csv.writer(fe, lineterminator='\n')
+                if write:
+                    f = open('arch_child.txt', 'a')
+                    writer_f = csv.writer(f, lineterminator='\n')
+                    fe = open('e2eppData.txt', 'a')
+                    writer_e = csv.writer(fe, lineterminator='\n')
 
-                for c in range(1 + self.lam):
-                    writer_c.writerow(self._log_data_children(net_info_type='full', start_time=start_time, pop=self.pop[c]))
-                    writer_f.writerow(self._log_data_children(net_info_type='active_only', start_time=start_time, pop=self.pop[c]))
-                    writer_e.writerow(list_to_string(self.pop[c].encodage_for_e2epp()))
-                f.close()
-                fe.close()
+                    for c in range(1 + self.lam):
+                        writer_c.writerow(self._log_data_children(net_info_type='full', start_time=start_time, pop=self.pop[c]))
+                        writer_f.writerow(self._log_data_children(net_info_type='active_only', start_time=start_time, pop=self.pop[c]))
+                        writer_e.writerow(list_to_string(self.pop[c].encodage_for_e2epp()))
+                    f.close()
+                    fe.close()
                 # replace the parent by the best individual
                 if evaluations[best_arg] > self.pop[0].eval:
                     self.pop[0].copy(self.pop[best_arg + 1])
@@ -405,12 +405,13 @@ class CGP(object):
                     self.pop[0].neutral_mutation(mutation_rate)  # modify the parent (neutral mutation)
 
                 # display and save log
-                print(self._log_data(net_info_type='active_only', start_time=start_time))
-                fw = open(log_file, 'a')
-                writer = csv.writer(fw, lineterminator='\n')
-                writer.writerow(self._log_data(net_info_type='full', start_time=start_time))
-                fa = open(arch_file, 'a')
-                writer_a = csv.writer(fa, lineterminator='\n')
-                writer_a.writerow(self._log_data(net_info_type='active_only', start_time=start_time))
-                fw.close()
-                fa.close()
+                if write:
+                    print(self._log_data(net_info_type='active_only', start_time=start_time))
+                    fw = open(log_file, 'a')
+                    writer = csv.writer(fw, lineterminator='\n')
+                    writer.writerow(self._log_data(net_info_type='full', start_time=start_time))
+                    fa = open(arch_file, 'a')
+                    writer_a = csv.writer(fa, lineterminator='\n')
+                    writer_a.writerow(self._log_data(net_info_type='active_only', start_time=start_time))
+                    fw.close()
+                    fa.close()

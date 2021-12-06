@@ -48,7 +48,7 @@ if __name__ == '__main__':
                                    imgSize=imgSize,predictor=predictor)
             cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=32, init=args.init)
 
-            #cgp.modified_evolution(max_eval=25, mutation_rate=0.1, log_file=args.log_file)
+            cgp.modified_evolution(max_eval=25, mutation_rate=0.1, log_file=args.log_file)
 
 
 
