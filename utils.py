@@ -52,18 +52,41 @@ def list_to_string(list):
 
     """
     string = ""
+    print(list)
     for sub_list in range(len(list)):
         if sub_list == len(list)-1:
-            if list[sub_list] == None:
+            if list[sub_list] is None:
                 string += 'None'
             else:
-                string += list[sub_list]
+                string += str(list[sub_list])
         else:
-            print("IN")
             for num in list[sub_list]:
                 string += str(num)
-                string += ','
+                string += ","
+    print(string)
     return string
+
+def lists_to_list(list):
+    """
+
+    Parameters
+    ----------
+    list: lists of network to transform into list for write it in a file
+
+    Returns
+    -------
+
+    """
+
+    list2 = []
+    for sub_list in range(len(list)):
+        if sub_list == len(list)-1:
+            list2.append(list[sub_list])
+        else:
+            for num in list[sub_list]:
+                list2.append(str(num))
+
+    return list2
 
 def read_add_0(file):
     f = open(file, "r")
@@ -79,6 +102,6 @@ def read_add_0(file):
     f2.close()
 
 if __name__ == '__main__':
-    read_add_0("e2eppData.txt")
+    read_add_0("e2eppDataPure.txt")
 
 
