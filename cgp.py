@@ -399,14 +399,18 @@ class CGP(object):
                 # save
                 f = open(arch_child, 'a')
                 writer_f = csv.writer(f, lineterminator='\n')
+
                 if e2epp_data is not None:
                     fe = open(e2epp_data, 'a')
                     writer_e = csv.writer(fe, lineterminator='\n')
 
-                    for c in range(1 + self.lam):
-                        writer_c.writerow(self._log_data_children(net_info_type='full', start_time=start_time, pop=self.pop[c]))
-                        writer_f.writerow(self._log_data_children(net_info_type='active_only', start_time=start_time, pop=self.pop[c]))
+                for c in range(1 + self.lam):
+                    writer_c.writerow(self._log_data_children(net_info_type='full', start_time=start_time, pop=self.pop[c]))
+                    writer_f.writerow(self._log_data_children(net_info_type='active_only', start_time=start_time, pop=self.pop[c]))
+                    if e2epp_data is not None:
                         writer_e.writerow(lists_to_list(self.pop[c].encodage_for_e2epp()))
+
+                if e2epp_data is not None:
                     fe.close()
                 f.close()
 

@@ -77,15 +77,15 @@ if __name__ == '__main__':
     elif args.mode == 'reevolution':
         # restart evolution
         print('Restart Evolution')
-        imgSize = 64
+        imgSize = 32
         with open('network_info.pickle', mode='rb') as f:
             network_info = pickle.load(f)
-        eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128, imgSize=imgSize)
+        eval_f = CNNEvaluation(gpu_num=1, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128, imgSize=imgSize, predictor=None)
         cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=imgSize)
 
-        data = pd.read_csv('./log_cgp.txt', header=None)
+        data = pd.read_csv('./log_cgp_classic.txt', header=None)
         cgp.load_log(list(data.tail(1).values.flatten().astype(int)))
-        cgp.modified_evolution(max_eval=250, mutation_rate=0.1, log_file='./log_restat.txt')
+        cgp.modified_evolution(max_eval=30, mutation_rate=0.1, log_file='./log_cgp_classic.txt', arch_file="arch_classic.txt")
 
     else:
         print('Undefined mode. Please check the "-m evolution or retrain or reevolution" ')
