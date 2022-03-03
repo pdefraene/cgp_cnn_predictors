@@ -96,6 +96,16 @@ def get_train_valid_loader(data_dir,
             root=data_dir, train=True,
             download=True, transform=valid_transform,
         )
+    elif dataset == 'svhn':
+        train_dataset = datasets.SVHN(
+            root=data_dir, split='train',
+            download=True, transform=train_transform,
+        )
+
+        valid_dataset = datasets.SVHN(
+            root=data_dir, split='train',
+            download=True, transform=valid_transform,
+        )
 
     num_train = len(train_dataset)
     indices = list(range(num_train))
