@@ -20,7 +20,8 @@ def get_train_valid_loader(data_dir,
                            shuffle=True,
                            show_sample=False,
                            num_workers=4,
-                           pin_memory=False):
+                           pin_memory=False,
+                           dataset='cifar10'):
     """
     Utility function for loading and returning train and valid
     multi-process iterators over the CIFAR-10 dataset. A sample
@@ -75,15 +76,26 @@ def get_train_valid_loader(data_dir,
         ])
 
     # load the dataset
-    train_dataset = datasets.CIFAR10(
-        root=data_dir, train=True,
-        download=True, transform=train_transform,
-    )
+    if dataset == 'cifar10':
+        train_dataset = datasets.CIFAR10(
+            root=data_dir, train=True,
+            download=True, transform=train_transform,
+        )
 
-    valid_dataset = datasets.CIFAR10(
-        root=data_dir, train=True,
-        download=True, transform=valid_transform,
-    )
+        valid_dataset = datasets.CIFAR10(
+            root=data_dir, train=True,
+            download=True, transform=valid_transform,
+        )
+    elif dataset == 'cifar100':
+        train_dataset = datasets.CIFAR100(
+            root=data_dir, train=True,
+            download=True, transform=train_transform,
+        )
+
+        valid_dataset = datasets.CIFAR100(
+            root=data_dir, train=True,
+            download=True, transform=valid_transform,
+        )
 
     num_train = len(train_dataset)
     indices = list(range(num_train))

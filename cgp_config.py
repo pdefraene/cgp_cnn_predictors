@@ -53,7 +53,7 @@ def encodage_for_e2epp(net,size=30):
         encoding.append([0, 0, 0, 0, 0])
     return encoding
 # Evaluation of CNNs
-def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predictor):
+def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predictor,acc_size, alpha,len_net):
     """
     Evaluate a Neural network
     Parameters
@@ -64,7 +64,7 @@ def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predi
     batchsize: batch size for the training
     dataset: dataset for train
     verbose: boolean value for print info
-    imgSize:?
+    imgSize: size of the image
     predictor: predictor for eval
 
     Returns
@@ -72,20 +72,39 @@ def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predi
     Accuracy of the network
     """
     evaluation = 0
-    if predictor is None:
-        print('\tgpu_id:', gpu_id, ',', net)
+    if predictor is None and not acc_size:
+        print("classic training")
         train = cnn.CNN_train(dataset, validation=True, verbose=verbose, imgSize=imgSize, batchsize=batchsize)
         evaluation = train(net, gpu_id, epoch_num=epoch_num, out_model=None)
-        print('\tgpu_id:', gpu_id, ', eval:', evaluation)
-    elif isinstance(predictor, E2epp):
+        print("evaluation: ", evaluation)
+    elif isinstance(predictor, E2epp) and not acc_size:
+        print("e2epp")
         encoding = encodage_for_e2epp(net)
         evaluation = predictor.predict_performance(encoding)
-        print(evaluation)
+        print("evaluation: ", evaluation)
+    elif isinstance(predictor, E2epp) and acc_size:
+        print("e2epp AAS")
+        encoding = encodage_for_e2epp(net)
+        acc = predictor.predict_performance(encoding)
+        size = alpha / len_net
+        print("acc: ", acc)
+        print("size", size)
+        evaluation = acc + size
+        print("evaluation: ", evaluation)
+    elif predictor is None and acc_size:
+        print("training AAS")
+        train = cnn.CNN_train(dataset, validation=True, verbose=verbose, imgSize=imgSize, batchsize=batchsize)
+        acc = train(net, gpu_id, epoch_num=epoch_num, out_model=None)
+        size = alpha / len_net
+        print("acc: ", evaluation)
+        print("size", size)
+        evaluation = acc + size
+        print("evaluation: ", evaluation)
     return evaluation
 
 
 class CNNEvaluation(object):
-    def __init__(self, gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=16, imgSize=32, predictor = None):
+    def __init__(self, gpu_num, dataset='cifar10', verbose=True, epoch_num=50, batchsize=16, imgSize=32, predictor = None, acc_size = False,alpha=10):
         self.gpu_num = gpu_num
         self.epoch_num = epoch_num
         self.batchsize = batchsize
@@ -93,12 +112,17 @@ class CNNEvaluation(object):
         self.verbose = verbose
         self.imgSize = imgSize
         self.predictor = predictor
+        self.acc_size = acc_size
+        self.alpha = alpha
 
     def __call__(self, net_lists):
         print("Net list of a CNNEvaluation:  ",net_lists) # check net_list
+
         evaluations = np.zeros(len(net_lists))
         for i in np.arange(0, len(net_lists)):
-            evaluations[i] = cnn_eval(net_lists[i], 0, self.epoch_num, self.batchsize, self.dataset, self.verbose, self.imgSize, self.predictor)
+            evaluations[i] = cnn_eval(net_lists[i], 0, self.epoch_num, self.batchsize, self.dataset,
+                                      self.verbose, self.imgSize, self.predictor, self.acc_size, self.alpha, len(net_lists[i]))
+            print("size", len(net_lists[i]))
 
         return evaluations
 

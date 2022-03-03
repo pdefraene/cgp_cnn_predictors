@@ -18,8 +18,16 @@ if __name__ == '__main__':
     parser.add_argument('--net_info_file', default='network_info.pickle', help='Network information file name')
     parser.add_argument('--mode', '-m', default='evolution', help='Mode (evolution / retrain / reevolution)')
     parser.add_argument('--init', '-i', action='store_true')
+    parser.add_argument('--dataset', '-d', default='cifar10')
     parser.add_argument('--predictor', '-p', default='training')
+    parser.add_argument('--acc_size', '-aas', default="false")
+    parser.add_argument('--alpha', '-a', default=1)
     args = parser.parse_args()
+
+    if args.acc_size == "false":
+        acc_size = False
+    else:
+        acc_size = True
 
     # --- Optimization of the CNN architecture ---
     if args.mode == 'evolution':
@@ -30,24 +38,23 @@ if __name__ == '__main__':
                 pickle.dump(network_info, f)
             # Evaluation function for CGP (training CNN and return validation accuracy)
             imgSize = 32
-            # eval_f = CNNEvaluation(gpu_num=args.gpu_num, dataset='cifar10', verbose=True, epoch_num=1, batchsize=128,imgSize=imgSize)
 
-            eval_f = CNNEvaluation(gpu_num=1, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128,
-                                   imgSize=imgSize,predictor=None)
+            eval_f = CNNEvaluation(gpu_num=1, dataset=args.dataset, verbose=True, epoch_num=3, batchsize=128,
+                                   imgSize=imgSize, predictor=None, acc_size=acc_size, alpha=args.alpha)
 
             # Execute evolution
             cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=imgSize, init=args.init)
             # cgp.modified_evolution(max_eval=250, mutation_rate=0.1, log_file=args.log_file)
-            cgp.modified_evolution(max_eval=25, mutation_rate=0.1, log_file='./log_cgp_classic.txt', arch_file="arch_classic.txt")
+            cgp.modified_evolution(max_eval=25, mutation_rate=0.1)
         elif args.predictor == 'e2epp':
             network_info = CgpInfoConvSet(rows=5, cols=30, level_back=10, min_active_num=1, max_active_num=30)
             predictor = E2epp(nb_trees=1000,training_data='e2epp_data.txt')
             imgSize = 32
-            eval_f = CNNEvaluation(gpu_num=1, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128,
-                                   imgSize=imgSize,predictor=predictor)
+            eval_f = CNNEvaluation(gpu_num=1, dataset=args.dataset, verbose=True, epoch_num=50, batchsize=128,
+                                   imgSize=imgSize, predictor=predictor, acc_size=acc_size, alpha=args.alpha)
             cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=32, init=args.init)
 
-            cgp.modified_evolution(max_eval=250, mutation_rate=0.1, log_file='./log_cgp_e2epp.txt', arch_file="arch_e2epp.txt")
+            cgp.modified_evolution(max_eval=250, mutation_rate=0.1)
 
 
 
@@ -64,7 +71,7 @@ if __name__ == '__main__':
         cgp.load_log(list(data.tail(1).values.flatten().astype(int)))  # Read the log at final generation
         print(cgp._log_data(net_info_type='active_only', start_time=0))
         # Retraining the network
-        temp = CNN_train('cifar10', validation=False, verbose=True, batchsize=128)
+        temp = CNN_train(args.dataset, validation=False, verbose=True, batchsize=128)
         #acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=500, out_model='retrained_net.model')
         acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=100, out_model='retrained_net.model')
         print(acc)
@@ -80,12 +87,13 @@ if __name__ == '__main__':
         imgSize = 32
         with open('network_info.pickle', mode='rb') as f:
             network_info = pickle.load(f)
-        eval_f = CNNEvaluation(gpu_num=1, dataset='cifar10', verbose=True, epoch_num=50, batchsize=128, imgSize=imgSize, predictor=None)
+        eval_f = CNNEvaluation(gpu_num=1, dataset=args.dataset, verbose=True, epoch_num=50, batchsize=128, imgSize=imgSize,
+                               predictor=None, acc_size=acc_size, alpha=args.alpha)
         cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=imgSize)
 
         data = pd.read_csv('./log_cgp_classic.txt', header=None)
         cgp.load_log(list(data.tail(1).values.flatten().astype(int)))
-        cgp.modified_evolution(max_eval=30, mutation_rate=0.1, log_file='./log_cgp_classic.txt', arch_file="arch_classic.txt")
+        cgp.modified_evolution(max_eval=50, mutation_rate=0.1)
 
     else:
         print('Undefined mode. Please check the "-m evolution or retrain or reevolution" ')
