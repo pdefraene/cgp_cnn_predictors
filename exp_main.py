@@ -39,13 +39,13 @@ if __name__ == '__main__':
             # Evaluation function for CGP (training CNN and return validation accuracy)
             imgSize = 32
 
-            eval_f = CNNEvaluation(gpu_num=1, dataset=args.dataset, verbose=True, epoch_num=3, batchsize=128,
+            eval_f = CNNEvaluation(gpu_num=1, dataset=args.dataset, verbose=True, epoch_num=50, batchsize=128,
                                    imgSize=imgSize, predictor=None, acc_size=acc_size, alpha=args.alpha)
 
             # Execute evolution
             cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=imgSize, init=args.init)
             # cgp.modified_evolution(max_eval=250, mutation_rate=0.1, log_file=args.log_file)
-            cgp.modified_evolution(max_eval=25, mutation_rate=0.1)
+            cgp.modified_evolution(max_eval=50, mutation_rate=0.1)
         elif args.predictor == 'e2epp':
             network_info = CgpInfoConvSet(rows=5, cols=30, level_back=10, min_active_num=1, max_active_num=30)
             predictor = E2epp(nb_trees=1000,training_data='e2epp_data.txt')
@@ -91,7 +91,7 @@ if __name__ == '__main__':
                                predictor=None, acc_size=acc_size, alpha=args.alpha)
         cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=imgSize)
 
-        data = pd.read_csv('./log_cgp_classic.txt', header=None)
+        data = pd.read_csv('./log_training_svhn.txt', header=None)
         cgp.load_log(list(data.tail(1).values.flatten().astype(int)))
         cgp.modified_evolution(max_eval=50, mutation_rate=0.1)
 

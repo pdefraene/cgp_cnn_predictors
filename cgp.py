@@ -275,7 +275,7 @@ class CGP(object):
         # choose fileName to write
         if self.eval_func.predictor is None:
             p = "_training"
-            self.e2epp_data_file = "e2epp_data" + self.eval_func.dataset+".txt"
+            self.e2epp_data_file = "e2epp_data_" + self.eval_func.dataset+".txt"
         elif isinstance(self.eval_func.predictor, E2epp):
             p = "_e2epp"
             self.e2epp_data_file = None
@@ -382,7 +382,7 @@ class CGP(object):
             _, pool_num= self.pop[0].check_pool()
             if self.init:
                 pass
-            else: # in the case of not using an init indiviudal
+            else: # in the case of not using an init individual
                 while active_num < self.pop[0].net_info.min_active_num or pool_num > self.max_pool_num:
                     self.pop[0].mutation(1.0)
                     active_num = self.pop[0].count_active_node()
@@ -406,7 +406,7 @@ class CGP(object):
                         _, pool_num= self.pop[i + 1].check_pool()
 
                 # evaluation and selection
-                print("population : ", self.pop)
+                print("population : ", self.pop[1:])
                 evaluations = self._evaluation(self.pop[1:], eval_flag=eval_flag)
                 best_arg = evaluations.argmax()
                 # save
