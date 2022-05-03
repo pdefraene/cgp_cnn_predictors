@@ -265,11 +265,7 @@ class CGP(object):
         self.max_pool_num = int(math.log2(imgSize) - 2)
         self.init = init
 
-        # if take into account accuracy and size
-        if self.eval_func.acc_size:
-            aas = "_aas"
-        else:
-            aas = ""
+
 
 
         # choose fileName to write
@@ -279,6 +275,14 @@ class CGP(object):
         elif isinstance(self.eval_func.predictor, E2epp):
             p = "_e2epp"
             self.e2epp_data_file = None
+
+        # if take into account accuracy and size
+        if self.eval_func.acc_size:
+            aas = "_aas_"
+            aas = aas + str(self.eval_func.alpha)
+            self.e2epp_data_file = None
+        else:
+            aas = ""
 
         self.child_file = "child"+p+aas+"_"+self.eval_func.dataset+".txt"
         self.arch_child_file = "arch_child"+p+aas+"_"+self.eval_func.dataset+".txt"

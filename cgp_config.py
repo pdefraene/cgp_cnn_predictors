@@ -5,6 +5,7 @@ import multiprocessing as mp
 import multiprocessing.pool
 import numpy as np
 import cnn_train as cnn
+import csv
 
 
 # wrapper function for multiprocessing
@@ -100,6 +101,10 @@ def cnn_eval(net, gpu_id, epoch_num, batchsize, dataset, verbose, imgSize, predi
         print("size", size)
         evaluation = acc + size
         print("evaluation: ", evaluation)
+        fw = open("CIFAR100_AAS_0_05_EVAL", 'a')
+        writer = csv.writer(fw, lineterminator='\n')
+        writer.writerow([acc,len_net,size,evaluation])
+        fw.close()
     return evaluation
 
 
