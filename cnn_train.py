@@ -118,7 +118,7 @@ class CNN_train():
                      [False] model test mode for final evaluation of the evolved model
                      (raining data : all training data, test data : all test data)
         verbose : boolean for print info
-        imgSize: ?
+        imgSize: Size of the images
         batchsize : size of the batch
         """
         self.verbose = verbose

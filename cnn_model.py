@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import pickle
 
 import torch
 import torch.nn as nn
@@ -10,6 +11,12 @@ import math
 import copy
 import torch.nn.functional as F
 import sys
+import pandas as pd
+
+# only to look at the parameters
+from cgp import *
+from cgp_config import *
+
 
 
 class ConvBlock(nn.Module):
@@ -187,9 +194,9 @@ class CGP2CNN(nn.Module):
         Parameters
         ----------
         cgp : list of network
-        in_channel : channel enter
+        in_channel : number of channel enter 3 in rgb
         n_class : class output
-        imgSize : ?
+        imgSize : size of the images
         """
         super(CGP2CNN, self).__init__()
         self.cgp = cgp
@@ -295,3 +302,26 @@ class CGP2CNN(nn.Module):
 
     def forward(self, x, t):
         return self.main(x)
+
+    def count_params(self):
+        """
+        Returns the number of trainable parameters of the network
+        -------
+
+        """
+        param_count = 0
+        for name, param in self.named_parameters():
+            param_count += param.numel()
+        return param_count
+
+if __name__ == '__main__':
+    # Load CGP configuration
+    network_info = CgpInfoConvSet(rows=5, cols=30, level_back=10, min_active_num=1, max_active_num=30)
+    # Load network architecture
+    cgp = CGP(network_info, None,w=False)
+    data = pd.read_csv("log_training_cifar10.txt", header=None)  # Load log file
+    cgp.load_log(list(data.tail(1).values.flatten().astype(int)))  # Read the log at final generation
+    print(cgp._log_data(net_info_type='active_only', start_time=0))
+    print(cgp.pop[0].active_net_list())
+    net = CGP2CNN(cgp.pop[0].active_net_list(),3,10,32)
+    print("Number of trainable parameters: ",net.count_params())

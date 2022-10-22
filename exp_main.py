@@ -7,6 +7,7 @@ import pandas as pd
 
 from cgp import *
 from cgp_config import *
+from cnn_model import CGP2CNN
 from cnn_train import CNN_train
 from e2epp import E2epp
 
@@ -48,33 +49,41 @@ if __name__ == '__main__':
             cgp.modified_evolution(max_eval=50, mutation_rate=0.1)
         elif args.predictor == 'e2epp':
             network_info = CgpInfoConvSet(rows=5, cols=30, level_back=10, min_active_num=1, max_active_num=30)
-            predictor = E2epp(nb_trees=1000,training_data='e2epp_data.txt')
+            data_file = "e2epp_data_" + args.dataset + ".txt"
+            predictor = E2epp(nb_trees=1000,training_data=data_file)
             imgSize = 32
             eval_f = CNNEvaluation(gpu_num=1, dataset=args.dataset, verbose=True, epoch_num=50, batchsize=128,
                                    imgSize=imgSize, predictor=predictor, acc_size=acc_size, alpha=args.alpha)
             cgp = CGP(network_info, eval_f, lam=args.lam, imgSize=32, init=args.init)
 
-            cgp.modified_evolution(max_eval=250, mutation_rate=0.1)
+            cgp.modified_evolution(max_eval=1000, mutation_rate=0.1)
 
 
 
     # --- Retraining evolved architecture ---
     elif args.mode == 'retrain':
         print('Retrain')
+        time_start = time.time()
+
+
         # In the case of existing log_cgp.txt
         # Load CGP configuration
         with open(args.net_info_file, mode='rb') as f:
             network_info = pickle.load(f)
         # Load network architecture
-        cgp = CGP(network_info, None)
-        data = pd.read_csv(args.log_file, header=None)  # Load log file
+        cgp = CGP(network_info, None, w=False)
+        data = pd.read_csv("log_e2epp_aas_0.05_svhn.txt", header=None)  # Load log file
         cgp.load_log(list(data.tail(1).values.flatten().astype(int)))  # Read the log at final generation
         print(cgp._log_data(net_info_type='active_only', start_time=0))
         # Retraining the network
-        temp = CNN_train(args.dataset, validation=False, verbose=True, batchsize=128)
+        #temp = CNN_train(args.dataset, validation=False, verbose=True, batchsize=128)
+        temp = CNN_train(args.dataset, validation=True, verbose=True, batchsize=128)
         #acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=500, out_model='retrained_net.model')
-        acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=100, out_model='retrained_net.model')
-        print(acc)
+        acc = temp(cgp.pop[0].active_net_list(), 0, epoch_num=50, out_model='retrained_net.model')
+        print("Accuracy:", acc)
+        print("Time:  ", time.time() - time_start)
+        net = CGP2CNN(cgp.pop[0].active_net_list(), 3, 10, 32)
+        print("Number of trainable parameters: ", net.count_params())
 
         # # otherwise (in the case where we do not have a log file.)
         # temp = CNN_train('haze1', validation=False, verbose=True, imgSize=128, batchsize=16)
